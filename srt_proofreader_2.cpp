@@ -1,4 +1,5 @@
 //v0.1 - Checks overlap and shows in console. 
+//v0.2 - Checks duplicates as well. 
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -13,6 +14,24 @@ double convertToDouble(string inputTime) {
     double result = h * 3600.0 + m * 60.0 + s + ms / 1000.0;
     //cout << "Input: " << inputTime << " Output: " << result;
     return result;
+}
+
+bool isInteger(string inputvalue) {
+    if (inputvalue.length() == 0) {
+        return false;
+    }
+
+    for (int i = 0; i < inputvalue.length(); i++) {
+        //cout << "char i: " << inputvalue[i] << "  ";
+        if (inputvalue.at(i) == '0' || inputvalue.at(i) == '1' || inputvalue.at(i) == '2' || inputvalue.at(i) == '3' || inputvalue.at(i) == '4' || inputvalue.at(i) == '5' || inputvalue.at(i) == '6' || inputvalue.at(i) == '7' || inputvalue.at(i) == '8' || inputvalue.at(i) == '9') {
+            //current number is a digit.
+            //do nothing.
+        }
+        else {
+            return false;
+        }
+    }
+    return true;
 }
 
 
@@ -30,6 +49,10 @@ int main() {
     string currentEndTime;
     double currentEndTimeDouble;
 
+    string currentLine = "";
+    string previousLine = "";
+    string previouspreviousLine = "";
+
     int currentSubtitleNumber = 0;
     int currentLineNo = 1;
     int lineCount = 1;
@@ -38,7 +61,11 @@ int main() {
     //get the file stream. 
     ifstream inputsrtfile;
     //inputsrtfile.open("C:/Users/Fergus Tam/Documents/srt_2/srt_proofreader_2/input.txt", ios::in);
-    inputsrtfile.open("C:/Users/Fergus Tam/Documents/srt_2/srt_proofreader_2/chi_v2.srt", ios::in);
+    //inputsrtfile.open("C:/Users/Fergus Tam/Documents/srt_2/srt_proofreader_2/normal.srt", ios::in);
+    inputsrtfile.open("C:/Users/Fergus Tam/Documents/srt_2/srt_proofreader_2/buggy.srt", ios::in);
+    //inputsrtfile.open("C:/Users/Fergus Tam/Documents/srt_2/srt_proofreader_2/bug.srt", ios::in);
+    //inputsrtfile.open("C:/Users/Fergus Tam/Documents/srt_2/srt_proofreader_2/duplicate.srt", ios::in);
+    //inputsrtfile.open("C:/Users/Fergus Tam/Documents/srt_2/srt_proofreader_2/eng_v2.srt", ios::in);
 
     cout << "opening the file\n";
 
@@ -55,15 +82,59 @@ int main() {
             {
             case 0:
                 //blank line. do nothing.
+
+                //used be in case 3:
+                //shift the time for the next cycle. 
+                previousEndTimeDouble = currentEndTimeDouble;
+                previousEndTime = currentEndTime;
+
+
+                //compare and look for duplicate lines. 
+
+                //cout << previouspreviousLine << " | " << previousLine << " | " << currentLine;
+
+                if (previousLine != "" && previouspreviousLine != "") {
+                    //cout << "Checking for duplicates \n";
+                    std::size_t found1 = previousLine.find(currentLine);
+                    if (found1 != string::npos) {
+                        //found a match. 
+                        cout << "Suspected duplicated line found at line " << currentLineNo - 1 << " subtitle no. " << currentSubtitleNumber << ": \n  \"" << previousLine << "\" AND \n  \"" << currentLine << "\"\n";
+                    }
+
+                    std::size_t found2 = previousLine.find(previouspreviousLine);
+                    if (found2 != string::npos) {
+                        //found a match. 
+                        cout << "Suspected duplicated line found at line " << currentLineNo - 4 << " subtitle no. " << currentSubtitleNumber -1 << ": \n  \"" << previousLine << "\" AND \n  \"" << previouspreviousLine << "\"\n";
+                    }
+
+
+                }
+
+                previouspreviousLine = previousLine;
+                previousLine = currentLine;
+
+
+
                 break;
+
             case 1:
                 //index line: 
                 //cout << "index line: " << lineinput << "\n";
-                //currentSubtitleNumber = stoi(lineinput);
+                
+                //check whether it is an integer:
+                if (isInteger(lineinput)) {
+                    //it is an integer. 
+                    //convert it into number.
+                    currentSubtitleNumber = stoi(lineinput);
+                }
+                else {
+                    cout << "An error occurred when parsing line " << lineCount << ", expected integer, but got \"" << lineinput << "\"\n";
+                }
 
                 break;
             case 2: 
                 //time.
+                //cout << "Checking line: " << lineCount << "\n";
                 currentStartTime = lineinput.substr(0, 12);
                 currentStartTimeDouble = convertToDouble(currentStartTime);
 
@@ -72,7 +143,7 @@ int main() {
 
                 if ((currentStartTimeDouble - previousEndTimeDouble) < 0.000) {
                     //it's an error!
-                    cout << "Error at line " << lineCount << ". Previous end time: " << previousEndTime << " Next start line: " << currentStartTime << "  Overlap by: " << currentStartTimeDouble - previousEndTimeDouble << "s \n";
+                    cout << "Error at line " << lineCount << ", subtitle " << currentSubtitleNumber << ". Previous end time: " << previousEndTime << " This line starts at: " << currentStartTime << "  Overlap by: " << currentStartTimeDouble - previousEndTimeDouble << "s \n";
                 }
 
                 //extract the start and end time, and compare. 
@@ -80,8 +151,15 @@ int main() {
             case 3:
                 //subtitle line.
                 //tick.
-                previousEndTimeDouble = currentEndTimeDouble;
-                previousEndTime = currentEndTime;
+
+                //lineinput is the subtitle line. 
+                currentLine = lineinput;
+
+
+
+
+
+                
 
 
                 break;
