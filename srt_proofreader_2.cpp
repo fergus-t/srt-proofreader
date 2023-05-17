@@ -35,10 +35,10 @@ bool isInteger(string inputvalue) {
 }
 
 
-int main() {
+int main(int argc, char** argv) {
     cout << "SRT Proofreader\n";
 
-
+    string uselessInput;
     //declare variables: 
     string previousEndTime = "00:00:00,000";
     double previousEndTimeDouble = 0;
@@ -53,17 +53,44 @@ int main() {
     string previousLine = "";
     string previouspreviousLine = "";
 
+    double lineDurationThreshold = 0.100;
+
     int currentSubtitleNumber = 0;
     int currentLineNo = 1;
     int lineCount = 1;
+
+    string inputFilePath = "";
+
+
+
+    //get file from arguments. 
+    if (argc == 1) {
+        cout << "Specify .srt input file. E.g. \"C:/Users/inputfiles/input.srt/\" \n\n";
+        cout << "Usage: ./srt_proofreader inputFilePath overlapDetectionThreshold(optional, in seconds)\n";
+        cout << "Example: ./srt_proofreader \"C:/inputFile/file.srt\" 0.100\n";
+        cin >> uselessInput;
+        return 1;
+    }
+
+    if (argc == 2) {
+        inputFilePath = argv[1];
+    }
+
+    if (argc == 3) {
+        inputFilePath = argv[1];
+        lineDurationThreshold = stod(argv[2]);
+    }
+
+
 
 
     //get the file stream. 
     ifstream inputsrtfile;
     //inputsrtfile.open("C:/Users/Fergus Tam/Documents/srt_2/srt_proofreader_2/input.txt", ios::in);
     //inputsrtfile.open("C:/Users/Fergus Tam/Documents/srt_2/srt_proofreader_2/normal.srt", ios::in);
-    inputsrtfile.open("C:/Users/Fergus Tam/Documents/srt_2/srt_proofreader_2/buggy.srt", ios::in);
+    //inputsrtfile.open("C:/Users/Fergus Tam/Documents/srt_2/srt_proofreader_2/buggy.srt", ios::in);
     //inputsrtfile.open("C:/Users/Fergus Tam/Documents/srt_2/srt_proofreader_2/bug.srt", ios::in);
+    inputsrtfile.open(inputFilePath, ios::in);
     //inputsrtfile.open("C:/Users/Fergus Tam/Documents/srt_2/srt_proofreader_2/duplicate.srt", ios::in);
     //inputsrtfile.open("C:/Users/Fergus Tam/Documents/srt_2/srt_proofreader_2/eng_v2.srt", ios::in);
 
@@ -147,6 +174,12 @@ int main() {
                 }
 
                 //extract the start and end time, and compare. 
+                if ((currentEndTimeDouble - currentStartTimeDouble) < lineDurationThreshold) {
+                    //it's an error!
+                    cout << "Error at line " << lineCount << ", subtitle " << currentSubtitleNumber << ". This line is less than " << lineDurationThreshold << "seconds. \n";
+                }
+
+
                 break;
             case 3:
                 //subtitle line.
@@ -178,9 +211,9 @@ int main() {
         cout << "End of validation. ";
     }
     else {
-        cout << "File is not open\n";
+        cout << "File is not open. Check that the file path that you provided is valid and accessible.\n";
     }
-
+    cin >> uselessInput;
     return 0;
 }
 
